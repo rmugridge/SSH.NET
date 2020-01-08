@@ -222,7 +222,11 @@ namespace Renci.SshNet
 
                 // specify a zero-length file name to avoid creating a file with absolute
                 // path '<path>/<filename part of path>' if directory '<path>' already exists
-                UploadFileModeAndName(channel, input, source.Length, string.Empty);
+                //
+                // Modified 20200108 RJM - Specify the filename without the path to avoid failure when the
+                // target has a fix for CVE-2018-20685.  The remote will fail if there is a directory with
+                // the specified filename.
+                UploadFileModeAndName(channel, input, source.Length, PosixPath.GetFileName(path));
                 UploadFileContent(channel, input, source, PosixPath.GetFileName(path));
             }
         }
@@ -290,6 +294,8 @@ namespace Renci.SshNet
         /// be specified for <paramref name="serverFileName"/>. This prevents the server from uploading the
         /// content to a file with path <c>&lt;file path&gt;/<paramref name="serverFileName"/></c> if there's
         /// already a directory with this path, and allows us to receive an error response.
+        /// 
+        /// 20200108 RJM - Specifying an empty string will fail where the target has a fix for CVE-2018-20685.
         /// </para>
         /// </remarks>
         private void UploadFileModeAndName(IChannelSession channel, Stream input, long fileSize, string serverFileName)

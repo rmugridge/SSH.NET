@@ -45,7 +45,10 @@ namespace Renci.SshNet
                 using (var source = fileInfo.OpenRead())
                 {
                     UploadTimes(channel, input, fileInfo);
-                    UploadFileModeAndName(channel, input, source.Length, string.Empty);
+                    // Modified 20200108 RJM - Specify the filename without the path to avoid failure when the
+                    // target has a fix for CVE-2018-20685.  The remote will fail if there is a directory with
+                    // the specified filename.
+                    UploadFileModeAndName(channel, input, source.Length, fileInfo.Name);
                     UploadFileContent(channel, input, source, fileInfo.Name);
                 }
             }
@@ -81,7 +84,9 @@ namespace Renci.SshNet
                 CheckReturnCode(input);
 
                 UploadTimes(channel, input, directoryInfo);
-                UploadDirectoryModeAndName(channel, input, ".");
+                // Modified 20200108 RJM - Specify the directory name without the path to avoid failure when the
+                // target has a fix for CVE-2018-20685.
+                UploadDirectoryModeAndName(channel, input, directoryInfo.Name);
                 UploadDirectoryContent(channel, input, directoryInfo);
             }
         }
@@ -206,6 +211,10 @@ namespace Renci.SshNet
 
         /// <summary>
         /// Sets mode and name of the directory being upload.
+        /// <para>
+        /// 20200108 RJM - The operation will fail if an empty or "." name is specified when the
+        /// target has a fix for CVE-2018-20685.
+        /// </para>
         /// </summary>
         private void UploadDirectoryModeAndName(IChannelSession channel, Stream input, string directoryName)
         {
